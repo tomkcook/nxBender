@@ -21,16 +21,21 @@ class PPPSession(object):
                 'dump',
                 'logfd', '2',   # we extract the remote IP thru this
 
-                'lcp-echo-interval', '10',
-                'lcp-echo-failure',  '2',
+#                'lcp-echo-interval', '10',
+#                'lcp-echo-failure',  '2',
 
                 'ktune',
                 'local',
                 'noipdefault',
                 'noccp',    # server is buggy
                 'noauth',
-                'nomp',
-                'usepeerdns',
+                'novj',
+                'nopcomp',
+                'noaccomp',
+#                'usepeerdns',
+#                'mtu', '1280',
+#                'mru', '1280',
+                'ipparam', 'netExtender'
         ]
 
     def run(self):
@@ -74,7 +79,9 @@ class PPPSession(object):
         except ssl.SSLError as e:     # unexpected
             logging.exception(e)
         except socket.error as e:     # expected (peer disconnect)
+            logging.error("Peer disconnected")
             logging.error(e.strerror)
+            logging.exception(e)
         finally:
             code = self.pppd.poll()
             if code is not None:    # pppd caused termination
@@ -100,6 +107,7 @@ class PPPSession(object):
 
         # If the SSL tunnel is blocked on writes, apply backpressure (stop reading from pppd)
         if self.tunsock.writes_pending:
+            logging.warning("Applying backpressure")
             w_set.append(self.tunsock)
         else:
             r_set.append(self.pty)

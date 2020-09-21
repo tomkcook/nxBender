@@ -38,19 +38,21 @@ class SSLTunnel(SSLConnection):
         super(SSLTunnel, self).__init__(*args, **kwargs)
 
         headers={
-            'X-SSLVPN-PROTOCOL': '2.0',
-            'X-SSLVPN-SERVICE': 'NETEXTENDER',
+            'X-SSLVPN-PROTOCOL': ' 2.0',
+            'X-SSLVPN-SERVICE': ' NETEXTENDER',
             'Proxy-Authorization': session_id,
-            'X-NX-Client-Platform': 'Linux',
-            'Connection-Medium': 'MacOS',
-            'X-NE-PROTOCOL': '2.0',
-            'Frame-Encode': 'off',
+            'X-NX-Client-Platform': ' Linux',
+            'Connection-Medium': ' MacOS',
+            'User-Agent':' SonicWALL NetExtender for Linux 8.6.800',
+            'Frame-Encode':' off',
+            'X-NE-PROTOCOL': ' 2.0',
         }
+        hdr = "CONNECT localhost:0 HTTP/1.0\r\n"
+        for h in headers.iteritems():
+            hdr = hdr + ('%s:%s\r\n' % h)
 
-        buf = 'CONNECT localhost:0 HTTP/1.0\r\n'
-        buf += '\r\n'.join('%s: %s' % h for h in headers.items())
-        buf += '\r\n\r\n'
-        self.s.sendall(buf.encode('ascii'))
+        hdr = hdr + '\r\n'
+        self.s.write(hdr)
 
         self.s.setblocking(0)
 
@@ -108,7 +110,7 @@ class SSLTunnel(SSLConnection):
 
     def write_pump(self):
         while len(self.wbuf):
-            packet = self.wbuf[:1514]
+            packet = self.wbuf[:1280]
             buf = struct.pack('>L', len(packet)) + packet
             self.s.sendall(buf)
             self.wbuf = self.wbuf[len(packet):]
